@@ -1,5 +1,4 @@
-# MASTER ARCHITECTURE DOCUMENT  
-Cloud-Based AI-Driven Self-Healing Web Application Firewall (WAF)
+# Cloud-Based AI-Driven Self-Healing Web Application Firewall (WAF)
 
 ---
 
@@ -13,7 +12,7 @@ It serves to:
 - Establish system boundaries and scope
 - Act as a single source of truth before implementation begins
 
-Once finalized, this architecture should not change without team-wide agreement.
+Once finalized, this architecture must not change without team-wide agreement.
 
 ---
 
@@ -22,12 +21,12 @@ Once finalized, this architecture should not change without team-wide agreement.
 The system is designed to protect a web application by inspecting incoming traffic using a Web Application Firewall (WAF) and enhancing detection capabilities through AI-based anomaly detection.
 
 The architecture follows a layered security approach:
-1. Traffic inspection and filtering
-2. Centralized logging and monitoring
-3. AI-based anomaly detection
-4. Automated mitigation and response
+- Traffic inspection and filtering
+- Centralized logging (file-based)
+- AI-based anomaly detection
+- Automated mitigation and response
 
-The system is deployed on cloud infrastructure (AWS preferred).
+The system is deployed on **Oracle Cloud Infrastructure (OCI – Always Free tier)** to ensure feasibility for live implementation.
 
 ---
 
@@ -36,7 +35,7 @@ The system is deployed on cloud infrastructure (AWS preferred).
 ### 3.1 Client (User / Attacker)
 
 - Generates HTTP/HTTPS requests
-- Can be legitimate users or malicious actors
+- Can represent legitimate users or malicious actors
 - Traffic enters the system through the WAF layer
 
 ---
@@ -52,7 +51,7 @@ The system is deployed on cloud infrastructure (AWS preferred).
 - Integrated with NGINX
 - Inspects HTTP requests and responses
 - Applies predefined and custom security rules
-- Blocks known attack patterns (SQLi, XSS, etc.)
+- Blocks known attack patterns such as SQL injection and XSS
 
 Blocked traffic is denied immediately. Allowed traffic proceeds to the application.
 
@@ -62,14 +61,14 @@ Blocked traffic is denied immediately. Allowed traffic proceeds to the applicati
 
 - A simple Flask-based web application
 - Represents a protected backend service
-- Used only to simulate realistic web traffic
+- Used to simulate realistic web traffic
 - Does not contain business-critical logic
 
-The application itself does not implement security logic.
+The application itself does not implement security mechanisms.
 
 ---
 
-### 3.4 Logging and Monitoring Layer
+### 3.4 Logging Layer (File-Based)
 
 Traffic and security events are logged for visibility and analysis.
 
@@ -78,11 +77,13 @@ Traffic and security events are logged for visibility and analysis.
 - ModSecurity audit logs
 - Application logs (optional)
 
-**Log Destinations**
-- ELK Stack (Elasticsearch, Logstash, Kibana)
-- AWS CloudWatch (alternative or complementary)
+**Log Storage**
+- Local file-based logs on the server
+- Logs are structured to enable parsing by the AI engine
 
-Logs are structured and stored for further processing by the AI engine.
+**Optional Enhancement**
+- ELK-lite stack may be used for visualization purposes only
+- ELK is not required for core system functionality
 
 ---
 
@@ -100,52 +101,52 @@ The AI engine enhances traditional WAF capabilities by detecting unknown or zero
 - Model: Isolation Forest
 - Approach: Unsupervised anomaly detection
 
-The AI engine does not block traffic directly. It only generates detection insights.
+The AI engine does not directly block traffic. It produces detection insights for the response engine.
 
 ---
 
 ### 3.6 Automation & Response Engine
 
-This component enables the system to be “self-healing”.
+This component enables the system to be self-healing.
 
 **Responsibilities**
 - Receive anomaly alerts from the AI engine
-- Decide mitigation actions
+- Decide appropriate mitigation actions
 - Automatically enforce responses
 
 **Example Actions**
 - Block suspicious IP addresses
-- Update ModSecurity rules
-- Trigger alerts or logs for manual review
+- Dynamically update ModSecurity rules
+- Log response actions for audit and review
 
-This layer closes the feedback loop between detection and protection.
+This component closes the feedback loop between detection and protection.
 
 ---
 
 ## 4. End-to-End Traffic Flow
 
-1. Client sends HTTP/HTTPS request
-2. Request enters NGINX (reverse proxy)
-3. ModSecurity inspects request
-   - If malicious → request blocked
-   - If allowed → forwarded to application
-4. Application processes request and responds
-5. Logs generated at WAF and application layers
-6. Logs sent to ELK / CloudWatch
-7. AI engine analyzes logs for anomalies
-8. If anomaly detected:
-   - Response engine triggers mitigation
-   - WAF configuration or rules are updated
+1. Client sends an HTTP/HTTPS request  
+2. Request enters NGINX (reverse proxy)  
+3. ModSecurity inspects the request  
+   - If malicious → request is blocked  
+   - If allowed → forwarded to the application  
+4. Application processes the request and responds  
+5. Logs are generated at the WAF and application layers  
+6. Logs are written to local log files  
+7. AI engine analyzes logs for anomalies  
+8. If an anomaly is detected:  
+   - Response engine triggers mitigation  
+   - WAF rules or IP blocks are updated  
 
 ---
 
 ## 5. Architecture Principles
 
-- **Defense in Depth**: Multiple layers of protection
-- **Separation of Concerns**: Each component has a single responsibility
-- **Scalability**: Components can be scaled independently
-- **Automation First**: Minimize manual intervention
-- **Explainability**: Clear detection and response logic
+- **Defense in Depth:** Multiple layers of protection
+- **Separation of Concerns:** Each component has a single responsibility
+- **Simplicity:** Focus on reliable, demonstrable functionality
+- **Automation First:** Minimize manual intervention
+- **Explainability:** Clear detection and response logic
 
 ---
 
@@ -157,6 +158,7 @@ The following are intentionally excluded from this project:
 - User authentication and authorization
 - Compliance certifications (PCI-DSS, ISO)
 - High-availability or multi-region failover
+- Full-scale SIEM or SOAR platforms
 
 ---
 
@@ -166,28 +168,30 @@ The following are intentionally excluded from this project:
 - Traffic volume is moderate and suitable for experimentation
 - AI models are trained on representative log data
 - Automated actions are limited to non-destructive mitigations
+- The project prioritizes deployability and live demonstration
 
 ---
 
 ## 8. Future Enhancements (Not Implemented)
 
 - Real-time streaming detection
-- Reinforcement learning-based response tuning
+- Advanced visualization dashboards
 - Integration with SOAR platforms
-- Advanced threat intelligence feeds
-- Dashboard-based response controls
+- Threat intelligence feed integration
+- Adaptive response tuning
 
 ---
 
-## 9. Architecture Freeze Declaration
+## 9. Architecture Freeze Declaration (FINAL)
 
-This document represents the frozen system architecture for Week 0.
+This document represents the **final frozen system architecture** for the capstone project.
 
-Any changes to:
-- Core components
-- Data flow
-- Technology choices
+The following components are frozen:
+- Cloud Provider: Oracle Cloud Infrastructure (OCI – Always Free)
+- WAF: NGINX + ModSecurity
+- Application: Flask demo application
+- AI Model: Isolation Forest (Python)
+- Logging: File-based WAF and application logs (ELK-lite optional)
+- Automation: IP blocking and dynamic WAF rule updates
 
-must be reviewed and approved by all team members.
-
----
+Any changes to core components, data flow, or technology choices must be reviewed and approved by all team members.
