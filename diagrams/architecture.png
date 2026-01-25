@@ -1,0 +1,10 @@
+User / Browser
+       |
+       v
+OCI Public IP
+       |
+       v
+NGINX (Reverse Proxy / WAF Entry)
+       |
+       v
+Flask Application
