@@ -1,0 +1,59 @@
+FROM nginx:1.25-alpine
+
+# -----------------------------
+# Install build dependencies
+# -----------------------------
+RUN apk add --no-cache \
+    git \
+    build-base \
+    libtool \
+    automake \
+    autoconf \
+    linux-headers \
+    pcre2-dev \
+    pcre-dev \
+    libxml2-dev \
+    yajl-dev \
+    geoip-dev \
+    curl \
+    curl-dev \
+    bash
+
+# -----------------------------
+# Build and install ModSecurity v3
+# -----------------------------
+WORKDIR /opt
+
+RUN git clone --depth 1 https://github.com/SpiderLabs/ModSecurity \
+ && cd ModSecurity \
+ && git submodule init \
+ && git submodule update \
+ && ./build.sh \
+ && ./configure \
+ && make \
+ && make install
+
+# -----------------------------
+# Clone OWASP Core Rule Set
+# -----------------------------
+RUN git clone https://github.com/coreruleset/coreruleset /usr/local/owasp-crs
+
+# -----------------------------
+# Prepare ModSecurity config
+# -----------------------------
+RUN mkdir -p /etc/nginx/modsecurity \
+ && cp /usr/local/owasp-crs/crs-setup.conf.example /etc/nginx/modsecurity/crs-setup.conf \
+ && cp -r /usr/local/owasp-crs/rules /etc/nginx/modsecurity/
+
+# -----------------------------
+# Copy your ModSecurity config
+# -----------------------------
+COPY waf/modsecurity/modsecurity.conf /etc/nginx/modsecurity/modsecurity.conf
+
+# -----------------------------
+# Copy your NGINX config
+# -----------------------------
+COPY waf/nginx/nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+
